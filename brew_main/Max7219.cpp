@@ -30,7 +30,7 @@ Max7219::Max7219(int chipSelect) {
   this->SendSPI(OP_DISPLAYTEST, 0);
   this->SetScanLimit(0x07);
   this->SetIntensity(0x09);
-  this->SetAllZeros();
+  this->SetAllClear();
   this->SetShutDown(0x01);
 }
 
@@ -76,7 +76,7 @@ void Max7219::SetUnique(byte digitPlace, byte unique, bool dot){
   this->SendSPI(8 - digitPlace, unique);
 }
 
-void Max7219::SetAllZeros() {
+void Max7219::SetAllClear() {
   for(int i = 1; i<=8; i++) {
     this->SendSPI(i, 0x00);  
   }

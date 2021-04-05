@@ -78,9 +78,9 @@ public:
     void SetUnique(byte digitPlace, byte unique, bool dot=false);
 
     /*
-    * Sets display to all zeros
+    * Clears display
     */
-    void SetAllZeros();
+    void SetAllClear();
 };
 
 
