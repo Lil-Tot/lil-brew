@@ -1,12 +1,14 @@
+#include <Arduino.h>
+
 #ifndef Max7219_h
 #define Max7219_h
 
 class Max7219
 {
 private:
-    byte chipSelect;
-    byte addr[8] = {0};
-    byte hexMap[16] = { 0b01111110, 0b00110000, 0b01101101, 0b01111001,
+    uint8_t chipSelect;
+    uint8_t addr[8] = {0};
+    uint8_t hexMap[16] = { 0b01111110, 0b00110000, 0b01101101, 0b01111001,
                         0b00110011, 0b01011011, 0b01011111, 0b01110000,
                         0b01111111, 0b01110011, 0b01110111, 0b00011111,
                         0b01001110, 0b01111110, 0b01001111, 0b01000111 };
@@ -24,35 +26,35 @@ public:
     * opcode    operations code to select register
     * data      byte of data to send to register
     */
-    void SendSPI(byte op_code, byte data);
+    void SendSPI(uint8_t op_code, uint8_t data);
 
     /*
     * Sets decode mode (none or Code B)
     * Param:
     * decodeMode    0x00(none), 0x01(Code B Digit 0), 0x0F (Code B Digit 3-0), 0xFF (Code B)
     */
-    void SetDecodeMode(byte decodeMode);
+    void SetDecodeMode(uint8_t decodeMode);
 
     /*
     * Sets the screen brightness
     * Params:
     * intensity     0xX0(low) - 0xXF(Max)
     */
-    void SetIntensity(byte intensity);
+    void SetIntensity(uint8_t intensity);
 
     /*
     * Sets the scan limit (Digits to display)
     * Params:
     * limit     0xX0(low) - 0xXF(Max)
     */
-    void SetScanLimit(byte limit);
+    void SetScanLimit(uint8_t limit);
     
     /*
     * Sets shutdown mode
     * Params:
     * mode      0xX0(shutdown mode) - 0xX1(normal operation)
     */
-    void SetShutDown(byte mode);
+    void SetShutDown(uint8_t mode);
 
     /*
     * Sets digits value
@@ -61,7 +63,7 @@ public:
     * value         0x# (0-F)
     * bool          True/False
     */
-    void SetHex(byte digitPlace, byte hex, bool dot=false);
+    void SetHex(uint8_t digitPlace, uint8_t hex, bool dot=false);
 
     /*
     * Sets a unique 7 segment diplay from user
@@ -75,7 +77,7 @@ public:
     *      D3    D7
     *  bool          true/false
     */
-    void SetUnique(byte digitPlace, byte unique, bool dot=false);
+    void SetUnique(uint8_t digitPlace, uint8_t unique, bool dot=false);
 
     /*
     * Clears display

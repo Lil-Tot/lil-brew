@@ -34,7 +34,7 @@ Max7219::Max7219(int chipSelect) {
   this->SetShutDown(0x01);
 }
 
-void Max7219::SendSPI(byte op_code, byte data) {
+void Max7219::SendSPI(uint8_t op_code, uint8_t data) {
   unsigned int spi_data = 0;
   spi_data = op_code << 8;
   spi_data = spi_data | data;
@@ -47,30 +47,30 @@ void Max7219::SendSPI(byte op_code, byte data) {
   SPI.endTransaction();
 }
 
-void Max7219::SetDecodeMode(byte decodeMode){
+void Max7219::SetDecodeMode(uint8_t decodeMode){
   this->SendSPI(OP_DECODE_MODE, decodeMode);
 }
 
-void Max7219::SetIntensity(byte intensity){
+void Max7219::SetIntensity(uint8_t intensity){
   this->SendSPI(OP_INTENSITY, intensity);
 }
 
-void Max7219::SetScanLimit(byte limit){
+void Max7219::SetScanLimit(uint8_t limit){
   this->SendSPI(OP_SCAN_LIMIT, limit);
 }
 
-void Max7219::SetShutDown(byte mode){
+void Max7219::SetShutDown(uint8_t mode){
   this->SendSPI(OP_SHUTDOWN, mode);
 }
 
-void Max7219::SetHex(byte digitPlace, byte hex, bool dot){
+void Max7219::SetHex(uint8_t digitPlace, uint8_t hex, bool dot){
   if(dot)
     this->SendSPI(8 - digitPlace, hexMap[hex] | 0b10000000);
   else
     this->SendSPI(8 - digitPlace, hexMap[hex]);
 }
 
-void Max7219::SetUnique(byte digitPlace, byte unique, bool dot){
+void Max7219::SetUnique(uint8_t digitPlace, uint8_t unique, bool dot){
   if(dot)
     unique = unique | 0b10000000;
   this->SendSPI(8 - digitPlace, unique);
