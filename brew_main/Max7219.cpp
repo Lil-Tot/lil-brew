@@ -1,83 +1,75 @@
-#include <SPI.h>
 #include "Max7219.h"
 
-#define MAX7219_CLOCK 100000000
-
-//Most signifigant byte does not matter for op-codes
-#define OP_NOOP         0xF0
-#define OP_DIGIT0       0x01
-#define OP_DIGIT1       0x02
-#define OP_DIGIT2       0x03
-#define OP_DIGIT3       0x04
-#define OP_DIGIT4       0x05
-#define OP_DIGIT5       0x06
-#define OP_DIGIT6       0x07
-#define OP_DIGIT7       0x08
-#define OP_DECODE_MODE  0x09 // Data 0=None/1=0/F=3-0/FF=7-0
-#define OP_INTENSITY    0x0A // Data X0=Min/XF=Max
-#define OP_SCAN_LIMIT   0x0B // Data X#=Digits
-#define OP_SHUTDOWN     0x0C // Data X1=Display_On/X0=Display_Off
-#define OP_DISPLAYTEST  0x0F // Data X0=off/X1=on
-
-
-Max7219::Max7219(int chipSelect) {
+Max7219::Max7219(int chipSelect, uint8_t numberOfDisplays) {
   this->chipSelect = chipSelect;
+  this->numberOfDisplays = numberOfDisplays;
   
   SPI.begin();
   pinMode(this->chipSelect,OUTPUT);
   digitalWrite(this->chipSelect,HIGH);
 
-  this->SendSPI(OP_DISPLAYTEST, 0);
-  this->SetScanLimit(0x07);
-  this->SetIntensity(0x09);
-  this->SetAllClear();
-  this->SetShutDown(0x01);
+  for(uint8_t i = 0; i < this->numberOfDisplays; i++) {
+    this->SendSPI(OP_DISPLAYTEST, 0, i);
+    this->SetScanLimit(0x07, i);
+    this->SetIntensity(0x09, i);
+    this->SetAllClear(i);
+    this->SetShutDown(0x01, i);    
+  }
 }
 
-void Max7219::SendSPI(uint8_t op_code, uint8_t data) {
-  unsigned int spi_data = 0;
+void Max7219::SendSPI(uint8_t op_code, uint8_t data, uint8_t displayNumber){
+  unsigned int spi_data;
   spi_data = op_code << 8;
   spi_data = spi_data | data;
 
 
   SPI.beginTransaction(SPISettings(10000, MSBFIRST, SPI_MODE0));
   digitalWrite(this->chipSelect,LOW);
-  SPI.transfer16(spi_data);
+
+  for(int i = this->numberOfDisplays; i >= 0; i--){
+    if(displayNumber == i) {
+      SPI.transfer16(spi_data);
+    }
+    else{
+      SPI.transfer16(OP_NOOP << 8);
+    }
+  }
+
   digitalWrite(this->chipSelect,HIGH);
   SPI.endTransaction();
 }
 
-void Max7219::SetDecodeMode(uint8_t decodeMode){
-  this->SendSPI(OP_DECODE_MODE, decodeMode);
+void Max7219::SetDecodeMode(uint8_t decodeMode, uint8_t displayNumber){
+  this->SendSPI(OP_DECODE_MODE, decodeMode, displayNumber);
 }
 
-void Max7219::SetIntensity(uint8_t intensity){
-  this->SendSPI(OP_INTENSITY, intensity);
+void Max7219::SetIntensity(uint8_t intensity, uint8_t displayNumber){
+  this->SendSPI(OP_INTENSITY, intensity, displayNumber);
 }
 
-void Max7219::SetScanLimit(uint8_t limit){
-  this->SendSPI(OP_SCAN_LIMIT, limit);
+void Max7219::SetScanLimit(uint8_t limit, uint8_t displayNumber){
+  this->SendSPI(OP_SCAN_LIMIT, limit, displayNumber);
 }
 
-void Max7219::SetShutDown(uint8_t mode){
-  this->SendSPI(OP_SHUTDOWN, mode);
+void Max7219::SetShutDown(uint8_t mode, uint8_t displayNumber){
+  this->SendSPI(OP_SHUTDOWN, mode, displayNumber);
 }
 
-void Max7219::SetHex(uint8_t digitPlace, uint8_t hex, bool dot){
+void Max7219::SetHex(uint8_t digitPlace, uint8_t hex, bool dot, uint8_t displayNumber){
   if(dot)
-    this->SendSPI(8 - digitPlace, hexMap[hex] | 0b10000000);
+    this->SendSPI(8 - digitPlace, hexMap[hex] | 0b10000000, displayNumber);
   else
-    this->SendSPI(8 - digitPlace, hexMap[hex]);
+    this->SendSPI(8 - digitPlace, hexMap[hex], displayNumber);
 }
 
-void Max7219::SetUnique(uint8_t digitPlace, uint8_t unique, bool dot){
+void Max7219::SetUnique(uint8_t digitPlace, uint8_t unique, bool dot, uint8_t displayNumber){
   if(dot)
     unique = unique | 0b10000000;
-  this->SendSPI(8 - digitPlace, unique);
+  this->SendSPI(8 - digitPlace, unique, displayNumber);
 }
 
-void Max7219::SetAllClear() {
+void Max7219::SetAllClear(uint8_t displayNumber){
   for(int i = 1; i<=8; i++) {
-    this->SendSPI(i, 0x00);  
+    this->SendSPI(i, 0x00, displayNumber);  
   }
 }
