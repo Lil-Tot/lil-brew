@@ -4,7 +4,7 @@
 #ifndef Max7219_h
 #define Max7219_h
 
-#define MAX7219_CLOCK 100000000
+#define CLOCK 5000000
 
 //Most signifigant byte does not matter for op-codes
 #define OP_NOOP         0x00
@@ -33,12 +33,21 @@ private:
                         0b01001110, 0b01111110, 0b01001111, 0b01000111 };
 public:
     /*
-    * Instaniate new Max7219, sets digits 0, min brightness, no decode, display all digits
+    * Declares new Max7219
     * Params:
     * chipSelect        pin for MOSI
     * numberOfDisplays  Number of displays daisy-chained;
     */
     Max7219(int chipSelect, uint8_t numberOfDisplays = 1);
+
+
+    /*
+    * Instaniates Max7219, sets digits 0, min brightness, no decode, display all digits
+    * Params:
+    * chipSelect        pin for MOSI
+    * numberOfDisplays  Number of displays daisy-chained;
+    */
+    void Begin();
 
     /*
     * Send 2 bytes via SPI to Max7219
@@ -83,7 +92,7 @@ public:
     * value         0x# (0-F)
     * bool          True/False
     */
-    void SetHex(uint8_t digitPlace, uint8_t hex, bool dot=false, uint8_t displayNumber = 0);
+    void SetHex(uint8_t digitPlace, uint8_t hex, uint8_t displayNumber = 0, bool dot=false);
 
     /*
     * Sets a unique 7 segment diplay from user
@@ -97,7 +106,7 @@ public:
     *      D3    D7
     *  bool          true/false
     */
-    void SetUnique(uint8_t digitPlace, uint8_t unique, bool dot=false, uint8_t displayNumber = 0);
+    void SetUnique(uint8_t digitPlace, uint8_t unique, uint8_t displayNumber = 0, bool dot=false);
 
     /*
     * Clears display

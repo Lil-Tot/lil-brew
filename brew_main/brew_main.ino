@@ -1,22 +1,52 @@
+#include <SPI.h>
 #include "Max7219.h"
+#include "Max31855.h"
 #include "BrewWatchController.h"
+#include "TemperatureController.h"
 
-#define SLAVE_MAX7219 15
+#define CHIP_SELECT 15
 
-#define TIMER_CLICK  5
+#define TEMP_CLICK 1
+#define TEMP_ENCODE_0 2
+#define TEMP_ENCODE_1 3
+
+#define TIMER_CLICK  10
 #define TIMER_ENCODE_0 4
 #define TIMER_ENCODE_1 0
+#define HEATER 5 // swapped 5 and 9 for best outpu
 
-Max7219 max7219(SLAVE_MAX7219);
+unsigned long tickTime;
+
+Max31855 max31855(CHIP_SELECT);
+Max7219 max7219(CHIP_SELECT, 2);
+
 BrewWatchController brewWatchController = BrewWatchController(TIMER_CLICK,
-                                                                TIMER_ENCODE_0,
-                                                                TIMER_ENCODE_1,
+                                                              TIMER_ENCODE_0,
+                                                              TIMER_ENCODE_1,
+                                                              &max7219,
+                                                              0
+                                                              );
+TemperatureController temperatureController = TemperatureController(TEMP_CLICK,
+                                                                TEMP_ENCODE_0,
+                                                                TEMP_ENCODE_1,
                                                                 &max7219,
-                                                                0
+                                                                &max31855,
+                                                                1
                                                                 );
-void setup() {  
+void setup() {
+  pinMode(CHIP_SELECT, OUTPUT);
+  pinMode(HEATER, OUTPUT);
+  digitalWrite(CHIP_SELECT, HIGH);
+
+  SPI.begin();
+  Serial.begin(115200);
+  max7219.Begin();
+  brewWatchController.Begin();
+  temperatureController.Begin();
 }
 
 void loop() {
-  brewWatchController.tick();
+  tickTime = millis();
+  brewWatchController.Tick(tickTime);
+  temperatureController.Tick(tickTime);
 }

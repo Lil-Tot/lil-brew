@@ -8,8 +8,7 @@ BrewWatchController::BrewWatchController(uint8_t encodeClick,
                                          uint8_t encodePin1,
                                          Max7219 *max7219, 
                                          int displayNumber
-                                         )
-{
+                                         ){
     brewWatchControllerList = this;
 
     this->encodeClick = encodeClick;
@@ -18,25 +17,25 @@ BrewWatchController::BrewWatchController(uint8_t encodeClick,
     this->display = max7219;
     this->displayNumber = displayNumber;
 
-    this->state = START;
     this->time = 0;
     this->stopTime = 0;
+}
+
+void BrewWatchController::Begin() {
+    this->state = START;
     this->secondsHand = millis();
 
     pinMode(this->encodeClick, INPUT_PULLUP);
     pinMode(this->encodePin0, INPUT_PULLUP);
     pinMode(this->encodePin1, INPUT_PULLUP);
-    this->encoder = digitalRead(TIMER_ENCODE_0) | digitalRead(TIMER_ENCODE_1) << 1;
+    this->encoder = digitalRead(this->encodePin0) | digitalRead(this->encodePin1) << 1;
 
-    attachInterrupt(digitalPinToInterrupt(TIMER_CLICK), this->callback_UpdateState, RISING);
+    attachInterrupt(digitalPinToInterrupt(this->encodeClick), this->callback_UpdateState, RISING);
 }
 
-BrewWatchController::BrewWatchController() {}
-
-void BrewWatchController::tick(){
+void BrewWatchController::Tick(unsigned long tickTime){
     if(this->state == START || this->state == COUNT) {
-        this->secondsHand;
-        if(millis() - this->secondsHand > 1000) {
+        if(tickTime - this->secondsHand > 1000) {
             if(this->state == START) {
                 this->FlashPushE1();
             }
@@ -50,35 +49,35 @@ void BrewWatchController::tick(){
 
 void BrewWatchController::FlashPushE1(){
     if(this->flash){
-        this->display->SetAllClear();
+        this->display->SetAllClear(this->displayNumber);
     }
     else{
-        this->display->SetHex(0,0x5);
-        this->display->SetHex(1,0xE);
-        this->display->SetUnique(2,T);
 
-        this->display->SetHex(4,0x0);
-        this->display->SetHex(5,0x0, true);
-        this->display->SetHex(6,0x0);
-        this->display->SetHex(7,0x0);
+        this->display->SetUnique(0,P, this->displayNumber);
+        this->display->SetUnique(1,U, this->displayNumber);
+        this->display->SetHex(2,0x5, this->displayNumber);
+        this->display->SetUnique(3,H, this->displayNumber);
+
+        this->display->SetHex(6,0xE, this->displayNumber);
+        this->display->SetHex(7,0x1, this->displayNumber);
   }
   this->flash = ! this->flash;
 }
 
 void BrewWatchController::UpdateTime(){
-    time += 1;
+    this->time += 1;
 
-    int minutes = time/60;
-    display->SetHex(0, minutes/10);
-    display->SetHex(1, minutes%10, true);    
+    int minutes = this->time/60;
+    display->SetHex(0, minutes/10, this->displayNumber);
+    display->SetHex(1, minutes%10, this->displayNumber, true);    
     
-    int seconds = time%60;
-    display->SetHex(2, seconds/10);
-    display->SetHex(3, seconds%10);      
+    int seconds = this->time%60;
+    display->SetHex(2, seconds/10, this->displayNumber);
+    display->SetHex(3, seconds%10, this->displayNumber);      
 }
 
 void BrewWatchController::UpdateStopTime(){
-    this->encoder = (this->encoder << 2) | (digitalRead(TIMER_ENCODE_0) | (digitalRead(TIMER_ENCODE_1) << 1));
+    this->encoder = (this->encoder << 2) | (digitalRead(this->encodePin0) | (digitalRead(this->encodePin1) << 1));
     this->encoder = this->encoder & 0b1111;
 
     if(this->encoder == 0b1101 || this->encoder == 0b0100 || this->encoder == 0b0010 || this->encoder == 0b1011)
@@ -91,10 +90,10 @@ void BrewWatchController::UpdateStopTime(){
     if(this->stopTime < 0)
         this->stopTime = 99;   
     
-    this->display->SetHex(4, ((int)(this->stopTime/10)%10));
-    this->display->SetHex(5, (int)this->stopTime%10, true);
-    this->display->SetHex(6, 0);
-    this->display->SetHex(7, 0);
+    this->display->SetHex(4, ((int)(this->stopTime/10)%10), this->displayNumber);
+    this->display->SetHex(5, (int)this->stopTime%10, this->displayNumber, true);
+    this->display->SetHex(6, 0, this->displayNumber);
+    this->display->SetHex(7, 0, this->displayNumber);
 }
 
 ICACHE_RAM_ATTR void BrewWatchController::callback_UpdateStopTime(){
@@ -103,14 +102,18 @@ ICACHE_RAM_ATTR void BrewWatchController::callback_UpdateStopTime(){
 
 void BrewWatchController::UpdateState(){
     if(this->state == START) {
-    Serial.print("Configure");
     this->display->SetAllClear();
 
-    attachInterrupt(digitalPinToInterrupt(TIMER_ENCODE_0),
+    this->display->SetUnique(0,t, this->displayNumber);
+    this->display->SetUnique(1,u, this->displayNumber);
+    this->display->SetUnique(2,r, this->displayNumber);
+    this->display->SetUnique(3,n, this->displayNumber);
+
+    attachInterrupt(digitalPinToInterrupt(this->encodePin0),
                     this->callback_UpdateStopTime,
                     CHANGE
                     );
-    attachInterrupt(digitalPinToInterrupt(TIMER_ENCODE_1),
+    attachInterrupt(digitalPinToInterrupt(this->encodePin1),
                     this->callback_UpdateStopTime,
                     CHANGE
                     );
@@ -120,10 +123,8 @@ void BrewWatchController::UpdateState(){
   }
 
   if(this->state == CONFIGURE) {
-    Serial.print("Count");
-
-    detachInterrupt(digitalPinToInterrupt(TIMER_ENCODE_0));
-    detachInterrupt(digitalPinToInterrupt(TIMER_ENCODE_1));
+    detachInterrupt(digitalPinToInterrupt(this->encodePin0));
+    detachInterrupt(digitalPinToInterrupt(this->encodePin1));
 
     this->secondsHand = millis();
     
@@ -132,8 +133,6 @@ void BrewWatchController::UpdateState(){
   }
 
   if(this->state == COUNT) {
-    Serial.print("Start");
-
     this->stopTime = 0;
     this->time = 0;
     this->secondsHand = millis();
