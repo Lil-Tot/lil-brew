@@ -23,7 +23,6 @@ BrewWatchController::BrewWatchController(uint8_t encodeClick,
 
 void BrewWatchController::Begin() {
     this->state = START;
-    this->secondsHand = millis();
 
     pinMode(this->encodeClick, INPUT_PULLUP);
     pinMode(this->encodePin0, INPUT_PULLUP);
@@ -52,7 +51,6 @@ void BrewWatchController::FlashPushE1(){
         this->display->SetAllClear(this->displayNumber);
     }
     else{
-
         this->display->SetUnique(0,P, this->displayNumber);
         this->display->SetUnique(1,U, this->displayNumber);
         this->display->SetHex(2,0x5, this->displayNumber);
@@ -102,46 +100,51 @@ ICACHE_RAM_ATTR void BrewWatchController::callback_UpdateStopTime(){
 
 void BrewWatchController::UpdateState(){
     if(this->state == START) {
-    this->display->SetAllClear();
+        this->display->SetAllClear();
 
-    this->display->SetUnique(0,t, this->displayNumber);
-    this->display->SetUnique(1,u, this->displayNumber);
-    this->display->SetUnique(2,r, this->displayNumber);
-    this->display->SetUnique(3,n, this->displayNumber);
+        this->display->SetUnique(0,t, this->displayNumber);
+        this->display->SetUnique(1,u, this->displayNumber);
+        this->display->SetUnique(2,r, this->displayNumber);
+        this->display->SetUnique(3,n, this->displayNumber);
 
-    attachInterrupt(digitalPinToInterrupt(this->encodePin0),
-                    this->callback_UpdateStopTime,
-                    CHANGE
-                    );
-    attachInterrupt(digitalPinToInterrupt(this->encodePin1),
-                    this->callback_UpdateStopTime,
-                    CHANGE
-                    );
+        attachInterrupt(digitalPinToInterrupt(this->encodePin0),
+                        this->callback_UpdateStopTime,
+                        CHANGE
+                        );
+        attachInterrupt(digitalPinToInterrupt(this->encodePin1),
+                        this->callback_UpdateStopTime,
+                        CHANGE
+                        );
 
-    this->state = CONFIGURE;
-    return;
-  }
+        this->state = CONFIGURE;
+        return;
+    }
 
-  if(this->state == CONFIGURE) {
-    detachInterrupt(digitalPinToInterrupt(this->encodePin0));
-    detachInterrupt(digitalPinToInterrupt(this->encodePin1));
+    if(this->state == CONFIGURE) {
+        detachInterrupt(digitalPinToInterrupt(this->encodePin0));
+        detachInterrupt(digitalPinToInterrupt(this->encodePin1));
 
-    this->secondsHand = millis();
-    
-    this->state = COUNT;
-    return;
-  }
+        
+        this->state = COUNT;
+        return;
+    }
 
-  if(this->state == COUNT) {
-    this->stopTime = 0;
-    this->time = 0;
-    this->secondsHand = millis();
+    if(this->state == COUNT) {
+        this->stopTime = 0;
+        this->time = 0;
 
-    this->state = START;
-    return;
-  }
+        this->state = START;
+        return;
+    }
 }
 
 ICACHE_RAM_ATTR void BrewWatchController::callback_UpdateState(){
-    brewWatchControllerList->UpdateState();
+    static unsigned long last_interrupt_time = 0;
+
+    unsigned long interrupt_time = millis();
+    if (interrupt_time - last_interrupt_time > 200) 
+    {
+        brewWatchControllerList->UpdateState();
+    }
+    last_interrupt_time = interrupt_time;
 }

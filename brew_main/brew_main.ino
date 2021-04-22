@@ -11,9 +11,9 @@
 #define TEMP_ENCODE_1 3
 
 #define TIMER_CLICK  10
-#define TIMER_ENCODE_0 4
-#define TIMER_ENCODE_1 0
-#define HEATER 5 // swapped 5 and 9 for best outpu
+#define TIMER_ENCODE_0 0
+#define TIMER_ENCODE_1 4
+#define HEATER 5
 
 unsigned long tickTime;
 
