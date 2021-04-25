@@ -20,33 +20,34 @@ unsigned long tickTime;
 Max31855 max31855(CHIP_SELECT);
 Max7219 max7219(CHIP_SELECT, 2);
 
-BrewWatchController brewWatchController = BrewWatchController(TIMER_CLICK,
-                                                              TIMER_ENCODE_0,
-                                                              TIMER_ENCODE_1,
-                                                              &max7219,
-                                                              0
-                                                              );
-TemperatureController temperatureController = TemperatureController(TEMP_CLICK,
-                                                                TEMP_ENCODE_0,
-                                                                TEMP_ENCODE_1,
+// BrewWatchController brewWatchController = BrewWatchController(TIMER_CLICK,
+//                                                               TIMER_ENCODE_0,
+//                                                               TIMER_ENCODE_1,
+//                                                               &max7219,
+//                                                               0
+//                                                               );
+TemperatureController temperatureController = TemperatureController(TIMER_CLICK,
+                                                                TIMER_ENCODE_0,
+                                                                TIMER_ENCODE_1,
                                                                 &max7219,
                                                                 &max31855,
-                                                                1
+                                                                1,
+                                                                HEATER
                                                                 );
 void setup() {
+  Serial.begin(115200);
   pinMode(CHIP_SELECT, OUTPUT);
   pinMode(HEATER, OUTPUT);
   digitalWrite(CHIP_SELECT, HIGH);
 
   SPI.begin();
-  Serial.begin(115200);
   max7219.Begin();
-  brewWatchController.Begin();
+  // brewWatchController.Begin();
   temperatureController.Begin();
 }
 
 void loop() {
   tickTime = millis();
-  brewWatchController.Tick(tickTime);
+  // brewWatchController.Tick(tickTime);
   temperatureController.Tick(tickTime);
 }

@@ -1,3 +1,4 @@
+#include <PID_v2.h>
 #include <Arduino.h>
 #include "Max7219.h"
 #include "Max31855.h"
@@ -14,8 +15,8 @@ enum tempStates {
   TEMP_START,
   TEMP_CONFIGURE,
   TEMP_READ,
-  HEATER_ON,
-  HEATER_OFF
+  TEMP_HEATER,
+  TEMP_SET_K
 };
 
 class TemperatureController
@@ -27,6 +28,7 @@ class TemperatureController
         uint8_t encodePin0;
         uint8_t encodePin1;
         uint8_t displayNumber;
+        uint8_t HEATER;
         double temperature;
         uint secondsHand;
         double targetTemperature;
@@ -34,10 +36,21 @@ class TemperatureController
         Max31855 *temperatureProbe; //  could make this into a function pointer, cleaner
         tempStates state;
 
+        //PID Controls
+        double kp = 0;
+        double ki = 0;
+        double kd = 0;
+        PID_v2 pid{this->kp, this->ki, this->kd, PID::Direct};
+  
+        unsigned long windowStartTime;
+        const int windowSize = 5000;
+
         void FlashPushE2();
         void UpdateTemperature();
         void UpdateTargetTemperature();
         void UpdateState();
+
+        void SetK();
 
     public:
         TemperatureController(uint8_t encodeClick,
@@ -45,7 +58,8 @@ class TemperatureController
                               uint8_t encodePin1,
                               Max7219 *max7219, 
                               Max31855 *max31855,
-                              int displayNumber
+                              int displayNumber,
+                              uint8_t HEATER
                               );
         void Begin();
 
