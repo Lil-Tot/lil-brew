@@ -2,12 +2,12 @@
 #include "Max7219.h"
 
 #define H 0b00110111
-#define n 0b00010101
+#define N 0b00010101
 #define P 0b01100111
 #define r 0b00000101
 #define t  0b00001111
 #define U 0b00111110
-#define u 0b00011100
+#define lower_u 0b00011100
 
 enum watchStates {
   START,

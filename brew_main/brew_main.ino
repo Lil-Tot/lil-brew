@@ -35,7 +35,6 @@ TemperatureController temperatureController = TemperatureController(TIMER_CLICK,
                                                                 HEATER
                                                                 );
 void setup() {
-  Serial.begin(115200);
   pinMode(CHIP_SELECT, OUTPUT);
   pinMode(HEATER, OUTPUT);
   digitalWrite(CHIP_SELECT, HIGH);

@@ -1,5 +1,3 @@
-#include <PID_v2.h>
-
 #include "TemperatureController.h"
 
 TemperatureController* TemperatureController::temperatureControllerList = NULL;
@@ -42,6 +40,11 @@ void TemperatureController::Begin(){
     this->pid.SetOutputLimits(0, this->windowSize);
 
     this->pid.SetSampleTime(1000);
+
+    WiFi.begin(this->ssid, this->password);
+    delay(5000); // Might Need for wifi
+
+   // client.setInsecure();
 }
 
 //Figure out what is wrong with pid if even
@@ -53,26 +56,27 @@ void TemperatureController::Tick(unsigned long tickTime){
             }
             if(this->state == TEMP_HEATER){
                 this->UpdateTemperature();
-                const double output = this->pid.Run(this->temperatureProbe->ReadFarenheit());
+                double currentTemperature = this->temperatureProbe->ReadFarenheit();
+                const double output = this->pid.Run(currentTemperature);
                
-                Serial.print("*** Time: ");
-                Serial.print(tickTime);
-                Serial.print("***\n");
+                this->URL = "";
 
-                Serial.print("PID Output: ");
-                Serial.print(output);
-                Serial.print("\n");
-
-                Serial.print("Target Temperature: ");
-                Serial.print(this->targetTemperature);
-                Serial.print("\n");
-
-                Serial.print("Window Start Time: ");
-                Serial.print(this->windowStartTime);
-                Serial.print("\n \n");
+                this->URL += logURL;
+                this->URL += "?Temp=";   //"Key1" must match a column name in your spreadsheet
+                this->URL += currentTemperature;     //"value1" can be whatever data from your sketch you want to log
+                this->URL += "&Time=";   //"Key2" must match a column name in your spreadsheet
+                this->URL += tickTime/1000;     //"value2" can be whatever data from your sketch you want to log
+                                        //you can add as many key/value pairs as you need to...
+                
+                client.connect(host, 443);
+                client.print(String("GET ") + URL + " HTTP/1.1\r\n" +
+                "Host: " + host + "\r\n" +
+                "User-Agent: BuildFailureDetectorESP8266\r\n" +
+                "Keep-Alive: timeout=5, max=100\r\n" +
+                "Connection: Keep-Alive\r\n\r\n"
+                );
 
                 if(tickTime - this->windowStartTime > this->windowSize) {
-                    // time to shift the Relay Window
                     windowStartTime = tickTime;
                 }
                 if (output > tickTime - windowStartTime){
@@ -109,7 +113,6 @@ void TemperatureController::FlashPushE2(){
 
 void TemperatureController::SetK(){
     this->kp = analogRead(A0)*(70.0/1023.0);
-    Serial.print(this->kp);
 
     this->display->SetHex(5,(int)(this->kp/10)%10, this->displayNumber);
     this->display->SetHex(6,(int)this->kp%10, this->displayNumber, true);
@@ -166,9 +169,9 @@ void TemperatureController::UpdateState(){
         this->display->SetAllClear(this->displayNumber);
 
         this->display->SetUnique(0,t, this->displayNumber);
-        this->display->SetUnique(1,u, this->displayNumber);
+        this->display->SetUnique(1,lower_u, this->displayNumber);
         this->display->SetUnique(2,r, this->displayNumber);
-        this->display->SetUnique(3,n, this->displayNumber);
+        this->display->SetUnique(3,N, this->displayNumber);
 
         attachInterrupt(digitalPinToInterrupt(this->encodePin0),
                     this->callback_UpdateTargetTemperature,

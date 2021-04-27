@@ -103,9 +103,9 @@ void BrewWatchController::UpdateState(){
         this->display->SetAllClear();
 
         this->display->SetUnique(0,t, this->displayNumber);
-        this->display->SetUnique(1,u, this->displayNumber);
+        this->display->SetUnique(1,lower_u, this->displayNumber);
         this->display->SetUnique(2,r, this->displayNumber);
-        this->display->SetUnique(3,n, this->displayNumber);
+        this->display->SetUnique(3,N, this->displayNumber);
 
         attachInterrupt(digitalPinToInterrupt(this->encodePin0),
                         this->callback_UpdateStopTime,
