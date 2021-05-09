@@ -1,6 +1,5 @@
 #include "BrewWatchController.h"
 
-
 BrewWatchController* BrewWatchController::brewWatchControllerList = NULL;
 
 BrewWatchController::BrewWatchController(uint8_t encodeClick,
@@ -34,14 +33,14 @@ void BrewWatchController::Begin() {
 
 void BrewWatchController::Tick(unsigned long tickTime){
     if(this->state == START || this->state == COUNT) {
-        if(tickTime - this->secondsHand > 1000) {
+        if(tickTime - this->secondsHand >= 1000) {
             if(this->state == START) {
                 this->FlashPushE1();
             }
             if(this->state == COUNT) {
                 this->UpdateTime();
             }
-            this->secondsHand = millis();
+            this->secondsHand = tickTime;
         }
     }
 }

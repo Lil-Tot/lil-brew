@@ -20,15 +20,15 @@ unsigned long tickTime;
 Max31855 max31855(CHIP_SELECT);
 Max7219 max7219(CHIP_SELECT, 2);
 
-// BrewWatchController brewWatchController = BrewWatchController(TIMER_CLICK,
-//                                                               TIMER_ENCODE_0,
-//                                                               TIMER_ENCODE_1,
-//                                                               &max7219,
-//                                                               0
-//                                                               );
-TemperatureController temperatureController = TemperatureController(TIMER_CLICK,
-                                                                TIMER_ENCODE_0,
-                                                                TIMER_ENCODE_1,
+BrewWatchController brewWatchController = BrewWatchController(TIMER_CLICK,
+                                                              TIMER_ENCODE_0,
+                                                              TIMER_ENCODE_1,
+                                                              &max7219,
+                                                              0
+                                                              );
+TemperatureController temperatureController = TemperatureController(TEMP_CLICK,
+                                                                TEMP_ENCODE_0,
+                                                                TEMP_ENCODE_1,
                                                                 &max7219,
                                                                 &max31855,
                                                                 1,
@@ -41,12 +41,12 @@ void setup() {
 
   SPI.begin();
   max7219.Begin();
-  // brewWatchController.Begin();
   temperatureController.Begin();
+  brewWatchController.Begin();
 }
 
 void loop() {
   tickTime = millis();
-  // brewWatchController.Tick(tickTime);
+  brewWatchController.Tick(tickTime);
   temperatureController.Tick(tickTime);
 }

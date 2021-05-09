@@ -48,7 +48,6 @@ class TemperatureController
       const char* ssid = "brew_net";
       const char* password = "secret_malt34";
 
-      //PID Controls
       double kp = 0;
       double ki = 0;
       double kd = 0;
@@ -58,7 +57,7 @@ class TemperatureController
       const int windowSize = 5000;
 
       void FlashPushE2();
-      void UpdateTemperature();
+      void UpdateTemperature(double);
       void UpdateTargetTemperature();
       void UpdateState();
 
