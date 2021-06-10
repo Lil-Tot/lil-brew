@@ -32,5 +32,5 @@ double Max31855::ReadCelcius(){
 }
 
 double Max31855::ReadFarenheit(){
-    return ReadCelcius()*1.8 + 32;
+    return ReadCelcius()*1.8 + 32 + 5;
 }

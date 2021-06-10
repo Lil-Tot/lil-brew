@@ -21,7 +21,7 @@ enum tempStates {
   TEMP_CONFIGURE,
   TEMP_READ,
   TEMP_HEATER,
-  TEMP_SET_K
+  TEMP_BOIL
 };
 
 class TemperatureController
@@ -37,6 +37,7 @@ class TemperatureController
       double temperature;
       uint secondsHand;
       double targetTemperature;
+      double currentTemperature;
       Max7219 *display;
       Max31855 *temperatureProbe; // could make this into a function pointer, cleaner
       tempStates state;
@@ -49,19 +50,21 @@ class TemperatureController
       const char* password = "secret_malt34";
 
       double kp = 0;
-      double ki = 0;
+      double ki = 1000;
       double kd = 0;
       PID_v2 pid{this->kp, this->ki, this->kd, PID::Direct};
 
       unsigned long windowStartTime;
       const int windowSize = 5000;
 
+      double slowPWM = 0;
+
       void FlashPushE2();
-      void UpdateTemperature(double);
+      void UpdateTemperature();
       void UpdateTargetTemperature();
       void UpdateState();
 
-      void SetK();
+      void SetSlowPWM();
 
   public:
       TemperatureController(uint8_t encodeClick,

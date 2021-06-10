@@ -40,21 +40,24 @@ void TemperatureController::Begin(){
 
     this->pid.SetSampleTime(1000);
 
+    WiFi.setPhyMode(WIFI_PHY_MODE_11B);
     WiFi.begin(this->ssid, this->password);
     delay(5000);
 }
 
 void TemperatureController::Tick(unsigned long tickTime){
-    if(this->state == TEMP_START || this->state == TEMP_HEATER) {
+    if(this->state == TEMP_START || this->state == TEMP_HEATER || this->state == TEMP_BOIL) {
         if(tickTime - this->secondsHand >= 1000) {
             if(this->state == TEMP_START) {
                 this->FlashPushE2();
             }
-            if(this->state == TEMP_HEATER){
-                double currentTemperature = this->temperatureProbe->ReadFarenheit();
-                this->UpdateTemperature(currentTemperature);
-                const double output = this->pid.Run(currentTemperature);
 
+            if(this->state == TEMP_HEATER || this->state == TEMP_BOIL){
+                this->UpdateTemperature();
+            }
+
+            if(this->state == TEMP_HEATER){
+                const double output = this->pid.Run(this->currentTemperature);
                 if(tickTime - this->windowStartTime > this->windowSize) {
                     windowStartTime = tickTime;
                 }
@@ -82,11 +85,20 @@ void TemperatureController::Tick(unsigned long tickTime){
                 "Connection: close\r\n\r\n"
                 );
             }
+            if(this->state == TEMP_BOIL){
+                this->SetSlowPWM();  
+                if(tickTime - this->windowStartTime > this->windowSize) {
+                    windowStartTime = tickTime;
+                }
+                if (this->slowPWM > tickTime - windowStartTime){
+                    digitalWrite(this->HEATER, HIGH);
+                }
+                else{
+                    digitalWrite(this->HEATER, LOW);   
+                }
+            }
             this->secondsHand = tickTime;
         }
-    }
-    if(this->state == TEMP_SET_K && tickTime % 100 == 0) {
-        this->SetK();
     }
 }
 
@@ -107,19 +119,23 @@ void TemperatureController::FlashPushE2(){
   this->flash = ! this->flash;
 }
 
-void TemperatureController::SetK(){
-    this->kp = analogRead(A0)*(50.0/1023.0);
+void TemperatureController::SetSlowPWM(){
+    this->slowPWM = analogRead(A0)*(this->windowSize/1023.0);
 
-    this->display->SetHex(5,(int)(this->kp/10)%10, this->displayNumber);
-    this->display->SetHex(6,(int)this->kp%10, this->displayNumber, true);
-    this->display->SetHex(7,(int)(this->kp*10)%10, this->displayNumber);
+    double percentage = this->slowPWM/this->windowSize;
+
+    this->display->SetHex(5,(int)(percentage), this->displayNumber);
+    this->display->SetHex(6,(int)(percentage*10)%10, this->displayNumber);
+    this->display->SetHex(7,(int)(percentage*100)%10, this->displayNumber);
 }
 
-void TemperatureController::UpdateTemperature(double temperature){
-    this->display->SetHex(0, (int)(temperature/100), this->displayNumber);
-    this->display->SetHex(1, ((int)(temperature/10)%10), this->displayNumber);
-    this->display->SetHex(2, (int)temperature%10, this->displayNumber, true);
-    this->display->SetHex(3, (int)(temperature*10)%10, this->displayNumber);
+void TemperatureController::UpdateTemperature(){
+     this->currentTemperature = this->temperatureProbe->ReadFarenheit();
+
+    this->display->SetHex(0, (int)(this->currentTemperature/100), this->displayNumber);
+    this->display->SetHex(1, ((int)(this->currentTemperature/10)%10), this->displayNumber);
+    this->display->SetHex(2, (int)this->currentTemperature%10, this->displayNumber, true);
+    this->display->SetHex(3, (int)(this->currentTemperature*10)%10, this->displayNumber);
 }
 
 void TemperatureController::UpdateTargetTemperature(){
@@ -148,17 +164,6 @@ ICACHE_RAM_ATTR  void TemperatureController::callback_UpdateTargetTemperature(){
 
 void TemperatureController::UpdateState(){
     if(this->state == TEMP_START){
-        this->display->SetAllClear(this->displayNumber);
-
-        this->display->SetHex(0,5, this->displayNumber);
-        this->display->SetHex(1,0xE, this->displayNumber);
-        this->display->SetUnique(2,t, this->displayNumber);
-
-        this->state = TEMP_SET_K;
-        return;
-    }
-
-    if(this->state == TEMP_SET_K){
         this->display->SetAllClear(this->displayNumber);
 
         this->display->SetUnique(0,t, this->displayNumber);
@@ -193,8 +198,16 @@ void TemperatureController::UpdateState(){
         this->state = TEMP_HEATER;
         return;
     }
-
     if(this->state == TEMP_HEATER) {
+        this->display->SetAllClear(this->displayNumber);
+
+        digitalWrite(this->HEATER, LOW);
+        
+        this->state = TEMP_BOIL;
+        return;
+    }
+
+    if(this->state == TEMP_BOIL) {
         this->display->SetAllClear(this->displayNumber);
 
         digitalWrite(this->HEATER, LOW);
